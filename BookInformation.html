@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Information Browser</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --dark-bg: #1a1a2e;
+            --light-bg: #f8f9fa;
+            --sidebar-bg: #16213e;
+            --accent: #0f3460;
+            --accent-light: #533483;
+            --text-dark: #1a1a2e;
+            --text-light: #ecf0f1;
+            --text-muted: #7f8c8d;
+            --border-color: #e0e0e0;
+            --shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.15);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--light-bg);
+            color: var(--text-dark);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* LEFT SIDEBAR - BOOKS LIST */
+        .sidebar {
+            width: 320px;
+            background: linear-gradient(135deg, var(--sidebar-bg) 0%, var(--accent) 100%);
+            color: var(--text-light);
+            display: flex;
+            flex-direction: column;
+            border-right: 3px solid var(--accent-light);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .sidebar-header {
+            padding: 24px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar-header h1 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+
+        .sidebar-header p {
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .search-box {
+            padding: 16px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-light);
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+
+        .search-box input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .search-box input:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.4);
+            box-shadow: 0 0 8px rgba(255, 255, 255, 0.2);
+        }
+
+        .books-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px 0;
+        }
+
+        .books-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .books-list::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .books-list::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+        }
+
+        .books-list::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .book-item {
+            padding: 12px 16px;
+            margin: 6px 12px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+        }
+
+        .book-item:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-left-color: #ffd700;
+            transform: translateX(4px);
+        }
+
+        .book-item.active {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.1));
+            border-left-color: #ffd700;
+            box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .book-item-title {
+            font-weight: 600;
+            font-size: 0.95rem;
+            margin-bottom: 4px;
+            line-height: 1.3;
+        }
+
+        .book-item-meta {
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        /* RIGHT PANEL - BOOK DETAILS */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--light-bg);
+            overflow-y: auto;
+        }
+
+        .main-content::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .main-content::-webkit-scrollbar-track {
+            background: var(--light-bg);
+        }
+
+        .main-content::-webkit-scrollbar-thumb {
+            background: #bbb;
+            border-radius: 4px;
+        }
+
+        .main-content::-webkit-scrollbar-thumb:hover {
+            background: #888;
+        }
+
+        .welcome-screen {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            text-align: center;
+            color: var(--text-muted);
+            flex-direction: column;
+        }
+
+        .welcome-screen h2 {
+            font-size: 2.2rem;
+            color: var(--text-dark);
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+
+        .welcome-screen p {
+            font-size: 1.1rem;
+            max-width: 400px;
+        }
+
+        .welcome-screen svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+
+        .book-detail {
+            padding: 40px;
+            max-width: 900px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .detail-header {
+            display: flex;
+            gap: 32px;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+        }
+
+        .book-cover {
+            flex: 0 0 200px;
+            height: 300px;
+            background: linear-gradient(135deg, var(--accent-light), var(--accent));
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 24px;
+            color: white;
+            box-shadow: var(--shadow-lg);
+            font-family: Georgia, serif;
+        }
+
+        .book-cover-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            line-height: 1.3;
+        }
+
+        .book-cover-author {
+            font-size: 0.95rem;
+            opacity: 0.9;
+            font-style: italic;
+        }
+
+        .detail-info {
+            flex: 1;
+        }
+
+        .detail-info h1 {
+            font-size: 2.2rem;
+            color: var(--text-dark);
+            margin-bottom: 8px;
+            line-height: 1.2;
+        }
+
+        .detail-info .author {
+            font-size: 1.1rem;
+            color: var(--accent);
+            font-weight: 500;
+            margin-bottom: 24px;
+        }
+
+        .detail-info .genre-tag {
+            display: inline-block;
+            background: var(--accent);
+            color: white;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 8px;
+            margin-bottom: 20px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .info-item {
+            border: 1px solid var(--border-color);
+            padding: 16px;
+            border-radius: 8px;
+            background: white;
+        }
+
+        .info-item-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .info-item-value {
+            font-size: 1rem;
+            color: var(--text-dark);
+            font-weight: 500;
+        }
+
+        .divider {
+            border-top: 2px solid var(--accent-light);
+            margin: 30px 0;
+        }
+
+        .section-title {
+            font-size: 1.4rem;
+            color: var(--text-dark);
+            margin: 30px 0 16px;
+            font-weight: 700;
+        }
+
+        .summary {
+            line-height: 1.8;
+            color: var(--text-dark);
+            font-size: 1.05rem;
+            max-width: 65ch;
+            margin-bottom: 20px;
+        }
+
+        .highlights {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+            margin-top: 16px;
+        }
+
+        .highlight-card {
+            background: white;
+            border: 1px solid var(--border-color);
+            padding: 18px;
+            border-radius: 8px;
+            border-left: 4px solid var(--accent-light);
+            transition: all 0.3s ease;
+        }
+
+        .highlight-card:hover {
+            box-shadow: var(--shadow);
+            transform: translateY(-2px);
+        }
+
+        .highlight-card h4 {
+            color: var(--accent);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+            font-weight: 700;
+        }
+
+        .highlight-card p {
+            color: var(--text-dark);
+            font-size: 0.95rem;
+            line-height: 1.5;
+            margin: 0;
+        }
+
+        .rating-section {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 24px 0;
+        }
+
+        .stars {
+            display: flex;
+            gap: 4px;
+            font-size: 1.3rem;
+        }
+
+        .rating-value {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .rating-text {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        /* RESPONSIVE DESIGN */
+        @media (max-width: 900px) {
+            .sidebar {
+                width: 280px;
+            }
+
+            .book-detail {
+                padding: 24px;
+            }
+
+            .detail-header {
+                gap: 20px;
+            }
+
+            .book-cover {
+                flex: 0 0 150px;
+                height: 230px;
+            }
+
+            .detail-info h1 {
+                font-size: 1.8rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+                height: auto;
+            }
+
+            .sidebar {
+                width: 100%;
+                height: auto;
+                max-height: 40vh;
+                border-right: none;
+                border-bottom: 3px solid var(--accent-light);
+            }
+
+            .main-content {
+                height: auto;
+                min-height: 60vh;
+            }
+
+            .detail-header {
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .book-cover {
+                width: 100%;
+                max-width: 200px;
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .book-detail {
+                padding: 20px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .sidebar {
+                max-height: 35vh;
+            }
+
+            .sidebar-header {
+                padding: 16px 14px;
+            }
+
+            .sidebar-header h1 {
+                font-size: 1.3rem;
+            }
+
+            .search-box {
+                padding: 12px 14px;
+            }
+
+            .book-detail {
+                padding: 16px;
+            }
+
+            .detail-info h1 {
+                font-size: 1.6rem;
+            }
+
+            .section-title {
+                font-size: 1.2rem;
+            }
+
+            .highlights {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- LEFT SIDEBAR -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h1>📚 Library</h1>
+            <p>Select a book to explore</p>
+        </div>
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="Search books...">
+        </div>
+        <div class="books-list" id="booksList"></div>
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div class="main-content" id="mainContent">
+        <div class="welcome-screen" id="welcomeScreen">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M4 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4z"></path>
+            </svg>
+            <h2>Welcome to Your Library</h2>
+            <p>Select a book from the list on the left to view its details</p>
+        </div>
+    </div>
+
+    <script>
+        // Book Database
+        const books = [
+            {
+                id: 1,
+                title: "Pride and Prejudice",
+                author: "Jane Austen",
+                year: 1813,
+                genre: "Classic Romance",
+                publisher: "T. Egerton",
+                pages: 279,
+                language: "English",
+                rating: 4.7,
+                reviews: 12500,
+                summary: "Elizabeth Bennet, quick-witted and spirited, navigates the social expectations of her era. When she meets the proud Mr. Darcy, both must overcome their initial prejudices to discover true love. This timeless novel explores themes of class, reputation, and the importance of personal growth through witty dialogue and social commentary.",
+                highlights: [
+                    { title: "Literary Impact", text: "One of the most influential novels in English literature" },
+                    { title: "Social Commentary", text: "Explores marriage, class, and women's independence in Regency era" },
+                    { title: "Modern Adaptations", text: "Countless film, TV, and literary adaptations" }
+                ]
+            },
+            {
+                id: 2,
+                title: "1984",
+                author: "George Orwell",
+                year: 1949,
+                genre: "Dystopian Fiction",
+                publisher: "Secker & Warburg",
+                pages: 328,
+                language: "English",
+                rating: 4.6,
+                reviews: 15800,
+                summary: "In a totalitarian state where Big Brother watches everyone, Winston Smith works at the Ministry of Truth, rewriting history to match the Party's current narrative. His private act of rebellion—keeping a secret diary—becomes a dangerous journey to find truth in a world built on lies. A chilling exploration of power, surveillance, and control.",
+                highlights: [
+                    { title: "Introduced Terms", text: "Big Brother, doublethink, and thoughtcrime entered popular culture" },
+                    { title: "Political Relevance", text: "Enduring commentary on authoritarianism and surveillance" },
+                    { title: "Philosophical", text: "Explores the nature of reality and truth under oppression" }
+                ]
+            },
+            {
+                id: 3,
+                title: "To Kill a Mockingbird",
+                author: "Harper Lee",
+                year: 1960,
+                genre: "Literary Fiction",
+                publisher: "J.B. Lippincott & Co.",
+                pages: 281,
+                language: "English",
+                rating: 4.8,
+                reviews: 18200,
+                summary: "Through the eyes of young Scout Finch in Depression-era Alabama, we witness her father Atticus defend a Black man falsely accused of a crime. What begins as a legal drama transforms into a profound lesson about moral courage, the destructive nature of prejudice, and the importance of defending the vulnerable. A masterpiece of American literature.",
+                highlights: [
+                    { title: "Pulitzer Prize", text: "Won the prestigious award in 1961" },
+                    { title: "Moral Lessons", text: "Timeless exploration of justice and human dignity" },
+                    { title: "Child's Perspective", text: "Narrated through Scout's innocent yet insightful viewpoint" }
+                ]
+            },
+            {
+                id: 4,
+                title: "The Great Gatsby",
+                author: "F. Scott Fitzgerald",
+                year: 1925,
+                genre: "Classic Fiction",
+                publisher: "Charles Scribner's Sons",
+                pages: 180,
+                language: "English",
+                rating: 4.5,
+                reviews: 14300,
+                summary: "Set in the opulent Jazz Age of the 1920s, Nick Carraway observes the mysterious millionaire Jay Gatsby's pursuit of his lost love Daisy Buchanan. Through lavish parties and romantic illusions, Fitzgerald crafts a haunting critique of American wealth and the impossibility of recapturing the past. A novel of beauty, desire, and disillusionment.",
+                highlights: [
+                    { title: "Jazz Age Elegance", text: "Captures the glamour and excess of 1920s America" },
+                    { title: "Literary Style", text: "Masterful prose and symbolism throughout" },
+                    { title: "Universal Themes", text: "Love, wealth, ambition, and the American Dream" }
+                ]
+            },
+            {
+                id: 5,
+                title: "The Hobbit",
+                author: "J.R.R. Tolkien",
+                year: 1937,
+                genre: "Fantasy Adventure",
+                publisher: "George Allen & Unwin",
+                pages: 310,
+                language: "English",
+                rating: 4.7,
+                reviews: 16900,
+                summary: "Bilbo Baggins, a comfort-loving hobbit, is swept into an unexpected adventure with thirteen dwarves on a quest to reclaim their treasure from the dragon Smaug. Through perilous journeys and encounters with magical creatures, Bilbo discovers courage and resilience he never knew he possessed. An enchanting prelude to The Lord of the Rings.",
+                highlights: [
+                    { title: "Middle-earth", text: "Introduces the world that becomes fully realized in LOTR" },
+                    { title: "The Ring", text: "First appearance of the One Ring's mysterious power" },
+                    { title: "Bildungsroman", text: "Classic coming-of-age fantasy adventure" }
+                ]
+            },
+            {
+                id: 6,
+                title: "The Alchemist",
+                author: "Paulo Coelho",
+                year: 1988,
+                genre: "Philosophical Fable",
+                publisher: "Rocco (Brazil), HarperOne (English)",
+                pages: 224,
+                language: "Portuguese (Original)",
+                rating: 4.4,
+                reviews: 11600,
+                summary: "Santiago, an Andalusian shepherd boy, dreams of treasure hidden near the Egyptian pyramids. His journey across the Sahara transforms from a search for material wealth into a spiritual awakening about following your dreams and listening to your heart. A simple yet profound tale about destiny and personal transformation.",
+                highlights: [
+                    { title: "Global Bestseller", text: "Translated into 80+ languages, sold millions worldwide" },
+                    { title: "Life Philosophy", text: "Celebrates pursuing your Personal Legend" },
+                    { title: "Spiritual Journey", text: "Explores omens, intuition, and the Soul of the World" }
+                ]
+            },
+            {
+                id: 7,
+                title: "Dune",
+                author: "Frank Herbert",
+                year: 1965,
+                genre: "Science Fiction Epic",
+                publisher: "Chilton Books",
+                pages: 688,
+                language: "English",
+                rating: 4.6,
+                reviews: 13400,
+                summary: "On the desert planet Arrakis, young Paul Atreides must navigate political intrigue, ecological challenges, and his own prophesied destiny. With themes of ecology, politics, and religion, Herbert creates an intricate universe where the spice melange controls everything. An epic saga of power, survival, and transformation.",
+                highlights: [
+                    { title: "World Building", text: "Intricate and detailed universe with complex politics" },
+                    { title: "Ecological Themes", text: "Early sci-fi exploring environmental and resource issues" },
+                    { title: "Influential", text: "Shaped modern science fiction for generations" }
+                ]
+            },
+            {
+                id: 8,
+                title: "Educated",
+                author: "Tara Westover",
+                year: 2018,
+                genre: "Memoir",
+                publisher: "Random House",
+                pages: 334,
+                language: "English",
+                rating: 4.5,
+                reviews: 8900,
+                summary: "Raised by survivalists in Idaho with no formal schooling, Tara Westover describes her journey to education and independence. Kept isolated from society and taught to distrust government, she eventually pursues learning, questioning her family's beliefs, and defining her own identity. A powerful story of resilience and self-discovery.",
+                highlights: [
+                    { title: "True Story", text: "Deeply personal memoir of educational liberation" },
+                    { title: "Award Winner", text: "National Book Critics Circle Award finalist" },
+                    { title: "Transformation", text: "Inspiring journey from isolation to empowerment" }
+                ]
+            }
+        ];
+
+        // State
+        let selectedBookId = null;
+        let filteredBooks = [...books];
+
+        // DOM Elements
+        const booksList = document.getElementById('booksList');
+        const mainContent = document.getElementById('mainContent');
+        const welcomeScreen = document.getElementById('welcomeScreen');
+        const searchInput = document.getElementById('searchInput');
+
+        // Initialize
+        function init() {
+            renderBooksList();
+            searchInput.addEventListener('input', handleSearch);
+        }
+
+        // Render Books List
+        function renderBooksList() {
+            booksList.innerHTML = filteredBooks.map(book => `
+                <div class="book-item ${selectedBookId === book.id ? 'active' : ''}" onclick="selectBook(${book.id})">
+                    <div class="book-item-title">${book.title}</div>
+                    <div class="book-item-meta">${book.author} • ${book.year}</div>
+                </div>
+            `).join('');
+        }
+
+        // Select Book
+        function selectBook(bookId) {
+            selectedBookId = bookId;
+            renderBooksList();
+            const book = books.find(b => b.id === bookId);
+            if (book) {
+                displayBookDetail(book);
+            }
+        }
+
+        // Display Book Detail
+        function displayBookDetail(book) {
+            welcomeScreen.style.display = 'none';
+            mainContent.innerHTML = `
+                <div class="book-detail">
+                    <div class="detail-header">
+                        <div class="book-cover">
+                            <div class="book-cover-title">${book.title}</div>
+                            <div class="book-cover-author">${book.author}</div>
+                        </div>
+                        <div class="detail-info">
+                            <h1>${book.title}</h1>
+                            <div class="author">by ${book.author}</div>
+                            <div>
+                                <span class="genre-tag">${book.genre}</span>
+                            </div>
+                            <div class="rating-section">
+                                <div class="stars">${'★'.repeat(Math.floor(book.rating))}${'☆'.repeat(5 - Math.floor(book.rating))}</div>
+                                <span class="rating-value">${book.rating}</span>
+                                <span class="rating-text">(${book.reviews.toLocaleString()} reviews)</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-item-label">Published</div>
+                            <div class="info-item-value">${book.year}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-item-label">Publisher</div>
+                            <div class="info-item-value">${book.publisher}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-item-label">Pages</div>
+                            <div class="info-item-value">${book.pages}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-item-label">Language</div>
+                            <div class="info-item-value">${book.language}</div>
+                        </div>
+                    </div>
+
+                    <div class="divider"></div>
+
+                    <h2 class="section-title">About This Book</h2>
+                    <p class="summary">${book.summary}</p>
+
+                    <h2 class="section-title">Highlights</h2>
+                    <div class="highlights">
+                        ${book.highlights.map(h => `
+                            <div class="highlight-card">
+                                <h4>${h.title}</h4>
+                                <p>${h.text}</p>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        // Search Handler
+        function handleSearch(e) {
+            const query = e.target.value.toLowerCase();
+            filteredBooks = books.filter(book =>
+                book.title.toLowerCase().includes(query) ||
+                book.author.toLowerCase().includes(query) ||
+                book.genre.toLowerCase().includes(query)
+            );
+            renderBooksList();
+            if (selectedBookId === null) {
+                welcomeScreen.style.display = 'flex';
+            }
+        }
+
+        // Start
+        init();
+    </script>
+</body>
+</html>
